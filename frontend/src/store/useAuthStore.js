@@ -6,7 +6,7 @@ import { io } from "socket.io-client";
 // ✅ CORRECT BASE URL
 const BASE_URL =
   import.meta.env.MODE === "development"
-    ? "http://localhost:5001"
+    ? "http://localhost:3000"
     : "https://fullstack-chat-app-1-8i1e.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
