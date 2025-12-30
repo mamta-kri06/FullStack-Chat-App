@@ -10,14 +10,19 @@ const Sidebar = () => {
 
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     getUsers();
   }, [getUsers]);
 
-  const filteredUsers = showOnlineOnly
+  const prefilteredUsers = showOnlineOnly
     ? users.filter((user) => onlineUsers.includes(user._id))
     : users;
+  const filteredUsers = prefilteredUsers.filter((user) =>
+    user.fullName.toLowerCase().includes(search.toLowerCase())
+  );
+
   // const filteredUsers = users;
   if (isUsersLoading) return <SidebarSkeleton />;
 
@@ -41,6 +46,20 @@ const Sidebar = () => {
           </label>
           <span className="text-xs text-zinc-500">
             ({onlineUsers?.length - 1} online)
+          </span>
+        </div>
+      </div>
+      <div className="px-3 mb-2">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search users..."
+            className="input input-bordered input-sm w-full pl-10 focus:outline-none focus:ring-2 focus:ring-primary"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+            🔍
           </span>
         </div>
       </div>
@@ -88,7 +107,9 @@ const Sidebar = () => {
         ))}
 
         {filteredUsers.length === 0 && (
-          <div className="text-center text-zinc-500 py-4">No online users</div>
+          <div className="text-center text-zinc-500 py-4">
+            {showOnlineOnly ? "No online users" : "No users found"}
+          </div>
         )}
       </div>
     </aside>

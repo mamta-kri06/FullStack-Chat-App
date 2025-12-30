@@ -38,11 +38,23 @@ const Navbar = () => {
 
             {authUser && (
               <>
-                <Link to={"/profile"} className={`btn btn-sm gap-2`}>
-                  <User className="size-5" />
-                  <span className="hidden sm:inline">{authUser.fullName}</span>
+                <Link
+                  to={"/profile"}
+                  className="btn btn-sm gap-2 flex items-center"
+                >
+                  {/* ✅ User Image */}
+                  <img
+                    src={
+                      authUser.profilePic ||
+                      "https://static.thenounproject.com/png/363640-200.png"
+                    }
+                    alt="Profile"
+                    className="w-6 h-6 rounded-full border"
+                  />
+                  <span className="hidden sm:inline">
+                    {authUser.fullName.split(" ")[0]}
+                  </span>
                 </Link>
-
                 <button className="flex gap-2 items-center" onClick={logout}>
                   <LogOut className="size-5" />
                   <span className="hidden sm:inline">Logout</span>

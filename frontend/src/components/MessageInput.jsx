@@ -2,12 +2,16 @@ import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { useAuthStore } from "../store/useAuthStore";
 
 export const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [isViewOnce, setIsViewOnce] = useState(false);
+
   const fileInputRef = useRef(null);
-  const { sendMessage, isMessagesSendLoading } = useChatStore();
+  const { sendMessage, isMessagesSendLoading, selectedUser } = useChatStore();
+  const { socket, authUser } = useAuthStore();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -18,13 +22,17 @@ export const MessageInput = () => {
 
     const reader = new FileReader();
     reader.onloadend = () => {
+      const confirmViewOnce = window.confirm("Send this image as view once?");
+      setIsViewOnce(confirmViewOnce);
       setImagePreview(reader.result);
     };
+
     reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
     setImagePreview(null);
+    setIsViewOnce(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -37,6 +45,11 @@ export const MessageInput = () => {
       await sendMessage({
         text: text.trim(),
         image: imagePreview,
+        isViewOnce,
+      });
+      socket.emit("stopTyping", {
+        to: selectedUser._id,
+        from: authUser._id,
       });
 
       // Clear form
@@ -46,6 +59,27 @@ export const MessageInput = () => {
     } catch (error) {
       console.error("Failed to send message:", error);
     }
+  };
+  const typingTimeoutRef = useRef(null);
+
+  const handleTyping = (e) => {
+    setText(e.target.value);
+
+    // console.log("typing emitted");
+    socket.emit("typing", {
+      from: authUser._id,
+      to: selectedUser._id,
+    });
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    typingTimeoutRef.current = setTimeout(() => {
+      // console.log("stopTyping emitted");
+      socket.emit("stopTyping", {
+        from: authUser._id,
+        to: selectedUser._id,
+      });
+    }, 1000);
   };
 
   return (
@@ -58,10 +92,17 @@ export const MessageInput = () => {
               alt="Preview"
               className="w-20 h-20 object-cover rounded-lg border border-zinc-700"
             />
+
+            {isViewOnce && (
+              <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1 rounded">
+                👁 view once
+              </span>
+            )}
+
             <button
               onClick={removeImage}
               className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300
-              flex items-center justify-center"
+        flex items-center justify-center"
               type="button"
             >
               <X className="size-3" />
@@ -77,7 +118,7 @@ export const MessageInput = () => {
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
             placeholder="Type a message..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleTyping}
           />
           <input
             type="file"

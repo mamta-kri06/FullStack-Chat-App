@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "https://static.thenounproject.com/png/363640-200.png",
     },
+    lastSeen: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
